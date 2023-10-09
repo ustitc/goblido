@@ -2,11 +2,8 @@ import java.time.LocalDate
 
 private val doneTaskRegexp = Regex("^x ")
 private val dateRegexp = Regex("^[0-9]{4}-[0-9]{2}-[0-9]{2}")
-private val taskRegexp = Regex("(\\([A-Z]\\))|\\B\\+(\\S+)|\\B@(\\S+)|(https?://\\S+)")
+private val taskRegexp = Regex("(\\([A-Z]\\))|\\B\\+(\\S+)|\\B@(\\S+)|(https?://\\S+)|(\\S+:\\S+)")
 
-interface Printable {
-    fun print(): String
-}
 
 sealed interface Task : Printable {
 
@@ -24,8 +21,20 @@ value class TodoTask(override val value: String) : Task {
     }
 
     fun parts(): List<Part> {
+        return parts(taskRegexp)
+    }
+
+    fun parts(extensions: List<PartsExtension>): List<Part> {
+        if (extensions.isEmpty()) {
+            return parts()
+        }
+        val regexp = Regex(taskRegexp.pattern + "|" + extensions.map { it.regex.pattern }.joinToString("|") { "($it)" })
+        return parts(regexp)
+    }
+
+    private fun parts(regex: Regex): List<Part> {
         val parts = mutableListOf<Part>()
-        val result = taskRegexp.findAll(value)
+        val result = regex.findAll(value)
         var lastMatchEnd = 0
         for (match in result) {
             val plainTextStart = lastMatchEnd
@@ -39,7 +48,13 @@ value class TodoTask(override val value: String) : Task {
                 match.groups[2] != null -> parts.add(Project(match.value.drop(1)))
                 match.groups[3] != null -> parts.add(Context(match.value.drop(1)))
                 match.groups[4] != null -> parts.add(WebLink(match.value))
+                match.groups[5] != null -> {
+                    val specialParts = match.value.split(":", limit = 2)
+                    parts.add(Special(specialParts[0], specialParts[1]))
+                }
+                else -> parts.add(Other(match.value))
             }
+
             lastMatchEnd = match.range.last + 1
         }
         if (lastMatchEnd < value.length) {
@@ -48,33 +63,6 @@ value class TodoTask(override val value: String) : Task {
         }
         return parts
     }
-}
-
-sealed interface Part : Printable
-
-@JvmInline
-value class PlainText(private val value: String) : Part {
-    override fun print(): String = value
-}
-
-@JvmInline
-value class WebLink(private val value: String) : Part {
-    override fun print(): String = value
-}
-
-@JvmInline
-value class Project(private val value: String) : Part {
-    override fun print(): String = "+$value"
-}
-
-@JvmInline
-value class Context(private val value: String) : Part {
-    override fun print(): String = "@$value"
-}
-
-@JvmInline
-value class Priority(private val value: String) : Part {
-    override fun print(): String = "($value)"
 }
 
 data class DoneTask(override val value: String, private val date: LocalDate?) : Task {
@@ -98,7 +86,18 @@ object BlankTask : Task {
     override fun print(): String = ""
 }
 
-fun task(str: String): Task {
+fun tasks(str: String): List<Task> {
+    return str
+        .split('\n')
+        .map { parseTask(it) }
+}
+
+fun task(line: Line): Task {
+    val str = line.text
+    return parseTask(str)
+}
+
+private fun parseTask(str: String): Task {
     return when {
         str.isBlank() -> BlankTask
         str.contains(doneTaskRegexp) -> parseDoneTask(str)
@@ -108,7 +107,7 @@ fun task(str: String): Task {
 
 private fun parseDoneTask(str: String): DoneTask {
     val withoutX = str.replace(doneTaskRegexp, "").trimStart()
-    val date = dateRegexp.find(withoutX)?.value.let { LocalDate.parse(it) }
+    val date = dateRegexp.find(withoutX)?.value?.let { LocalDate.parse(it) }
     val value = withoutX.replace(dateRegexp, "").trimStart()
     return DoneTask(value, date)
 }

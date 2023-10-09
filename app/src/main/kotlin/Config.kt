@@ -1,6 +1,11 @@
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.*
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.element
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
+import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.io.path.*
 
 private const val appConfigName = "app.json"
@@ -34,6 +39,14 @@ private val lightTheme = Theme(
     link = TextConfig(
         color = "#0000FF",
         fontWeight = 400
+    ),
+    special = TextConfig(
+        color = "#3498db",
+        fontWeight = 700
+    ),
+    other = TextConfig(
+        color = "#3498db",
+        fontWeight = 700
     ),
     select = SelectConfig(
         backgroundColor = "#FFEB3B",
@@ -73,6 +86,14 @@ private val darkTheme = Theme(
         color = "#FFD700",
         fontWeight = 400
     ),
+    special = TextConfig(
+        color = "#FF9800",
+        fontWeight = 700
+    ),
+    other = TextConfig(
+        color = "#FF9800",
+        fontWeight = 700
+    ),
     select = SelectConfig(
         backgroundColor = "#BD93F9",
         handleColor = "#F8F8F2"
@@ -86,7 +107,8 @@ private val darkTheme = Theme(
 
 @Serializable
 data class Config(
-    val lastFile: String?,
+    @Serializable(with = PathSerializer::class)
+    val lastFile: Path?,
     val theme: ThemeName
 )
 
@@ -100,6 +122,8 @@ data class Theme(
     val context: TextConfig,
     val doneTask: TextConfig,
     val link: TextConfig,
+    val special: TextConfig,
+    val other: TextConfig,
     val select: SelectConfig,
     val sidebar: SidebarStyle
 )
@@ -180,4 +204,20 @@ fun loadAvailableThemes(): List<ThemeName> {
         .filter { it.extension == "json" }
         .map { it.name.replace(".json", "") }
         .map { ThemeName(it) }
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializer(forClass = Path::class)
+object PathSerializer : KSerializer<Path> {
+    override val descriptor = buildClassSerialDescriptor("Path") {
+        element<String>("pathString")
+    }
+
+    override fun serialize(encoder: Encoder, value: Path) {
+        encoder.encodeString(value.toString())
+    }
+
+    override fun deserialize(decoder: Decoder): Path {
+        return Paths.get(decoder.decodeString())
+    }
 }

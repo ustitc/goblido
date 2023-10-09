@@ -11,3 +11,6 @@ pluginManagement {
 }
 
 rootProject.name = "goblido"
+
+include("app")
+include("domain")

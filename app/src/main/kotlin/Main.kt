@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.AwtWindow
@@ -17,11 +18,10 @@ import androidx.compose.ui.window.application
 import kotlinx.serialization.json.Json
 import java.awt.FileDialog
 import java.awt.Frame
-import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.Path
-import kotlin.io.path.pathString
 
+private val documentRepo = DocumentRepository()
 
 fun main() = application {
     val json = Json {
@@ -44,7 +44,7 @@ fun main() = application {
             activeTheme,
             availableThemes,
             onTodoChange = { path ->
-                config = config.copy(lastFile = path.pathString)
+                config = config.copy(lastFile = path)
                 saveConfig(config, json)
             },
             onThemeChange = { themeName ->
@@ -68,16 +68,24 @@ fun App(
     onTodoChange: (Path) -> Unit,
     onThemeChange: (ThemeName) -> Unit
 ) {
-    val file by derivedStateOf { config.lastFile?.let { File(it) } }
-    var text by remember { mutableStateOf(file?.readText() ?: "") }
+    val filePath by derivedStateOf { config.lastFile }
+    var document by remember { mutableStateOf(filePath?.let { path -> documentRepo.getByPath(path) }) }
+    var textRange by remember { mutableStateOf(TextRange(0)) }
 
     Row {
-        LeftSidebar(file, theme, activeTheme, themes, onTodoChange, onThemeChange)
+        LeftSidebar(document, theme, activeTheme, themes,
+            onTodoChange = { path ->
+                textRange = TextRange(0)
+                document = documentRepo.getByPath(path)
+                onTodoChange(path)
+            }, onThemeChange
+        )
 
-        if (file != null) {
-            TodoEditor(text, theme) {
-                text = it
-                file!!.writeText(text)
+        if (filePath != null) {
+            TodoEditor(document!!, textRange, theme) { updatedContent, updatedRange ->
+                textRange = updatedRange
+                document = updatedContent
+                documentRepo.save(document!!)
             }
         }
     }
@@ -85,7 +93,7 @@ fun App(
 
 @Composable
 fun LeftSidebar(
-    todo: File?,
+    document: Document?,
     theme: Theme,
     activeTheme: ThemeName,
     themes: List<ThemeName>,
@@ -116,9 +124,9 @@ fun LeftSidebar(
                     Text("Open todo")
                 }
 
-                if (todo != null) {
+                if (document != null) {
                     Text(
-                        todo.name,
+                        document.name,
                         fontWeight = FontWeight.Bold,
                         color = theme.sidebar.textColor.toColor()
                     )
