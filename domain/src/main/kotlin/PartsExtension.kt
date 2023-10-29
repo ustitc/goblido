@@ -1,7 +1,5 @@
 interface PartsExtension {
-
     val regex: Regex
-
 }
 
 object DatePartExtension : PartsExtension {

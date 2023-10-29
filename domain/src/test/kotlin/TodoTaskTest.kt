@@ -1,7 +1,7 @@
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
-class TodoTaskTest : StringSpec({
+class TodoTaskTest : StringSpec(body = {
 
     "returns part of task" {
         val task = TodoTask("(A) create a web page +goblido and +web @home https://dinf.io due:2023-09-10")
@@ -17,7 +17,7 @@ class TodoTaskTest : StringSpec({
             PlainText(" "),
             WebLink("https://dinf.io"),
             PlainText(" "),
-            Special("due", "2023-09-10")
+            Special("due", "2023-09-10"),
         )
     }
 
@@ -45,13 +45,29 @@ class TodoTaskTest : StringSpec({
     }
 
     "parses contexts" {
-        val task =
-            TodoTask("@context @контекст @上下文环境 @big-context @big_context @important!!! @context1 @@context @context@context")
+        val text = "@context"
+        val task = TodoTask(text)
 
         task.parts().filterIsInstance<Context>() shouldBe listOf(
             Context("context"),
+        )
+    }
+
+    "parses contexts in other languages" {
+        val text = "@контекст @上下文环境"
+        val task = TodoTask(text)
+
+        task.parts().filterIsInstance<Context>() shouldBe listOf(
             Context("контекст"),
             Context("上下文环境"),
+        )
+    }
+
+    "parses contexts with non text symbols" {
+        val text = "@big-context @big_context @important!!! @context1 @@context @context@context"
+        val task = TodoTask(text)
+
+        task.parts().filterIsInstance<Context>() shouldBe listOf(
             Context("big-context"),
             Context("big_context"),
             Context("important!!!"),
@@ -98,7 +114,7 @@ class TodoTaskTest : StringSpec({
             PlainText(" "),
             Project("goblido"),
             PlainText(" "),
-            Other("^_^")
+            Other("^_^"),
         )
     }
 
@@ -108,14 +124,13 @@ class TodoTaskTest : StringSpec({
         val extension = object : PartsExtension {
 
             override val regex: Regex
-                get() = Regex("\\B\\+(\\S+)")
+                get() = Regex("""\B\+(\S+)""")
         }
 
         task.parts(listOf(extension)) shouldBe listOf(
             Priority("A"),
             PlainText(" create a web page "),
-            Project("goblido")
+            Project("goblido"),
         )
     }
-
-})
+},)

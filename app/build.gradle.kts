@@ -17,6 +17,7 @@ dependencies {
     // With compose.desktop.common you will also lose @Preview functionality
     implementation(compose.desktop.currentOs)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.6")
     implementation(project(":domain"))
     testImplementation("io.kotest:kotest-runner-junit5:5.7.2")
     testImplementation("io.kotest:kotest-assertions-core:5.7.2")
@@ -31,7 +32,7 @@ compose.desktop {
             packageName = "Goblido"
             packageVersion = "1.0.0"
             jvmArgs(
-                "-Dapple.awt.application.appearance=system"
+                "-Dapple.awt.application.appearance=system",
             )
         }
     }

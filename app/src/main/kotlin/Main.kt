@@ -1,29 +1,33 @@
-import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.AwtWindow
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.serialization.json.Json
-import java.awt.FileDialog
-import java.awt.Frame
 import java.nio.file.Path
-import kotlin.io.path.Path
 
 private val documentRepo = DocumentRepository()
 
-fun main() = application {
+fun main(): Unit = application {
     val json = Json {
         prettyPrint = true
     }
@@ -35,54 +39,66 @@ fun main() = application {
     Window(title = "Goblido", onCloseRequest = ::exitApplication) {
         var config by remember { mutableStateOf(initialConfig) }
         var theme by remember { mutableStateOf(initialTheme) }
-        var activeTheme by remember { mutableStateOf(initialConfig.theme) }
         var availableThemes by remember { mutableStateOf(initialAvailableThemes) }
 
         App(
-            config,
-            theme,
-            activeTheme,
-            availableThemes,
-            onTodoChange = { path ->
+            config = config,
+            theme = theme,
+            themes = availableThemes,
+            onDocumentChange = { path ->
                 config = config.copy(lastFile = path)
                 saveConfig(config, json)
             },
             onThemeChange = { themeName ->
                 theme = loadTheme(themeName)
-                activeTheme = themeName
                 availableThemes = loadAvailableThemes()
                 config = config.copy(theme = themeName)
                 saveConfig(config, json)
-            }
+            },
         )
     }
 }
 
+@Suppress("NoNotNullOperator")
 @Composable
-@Preview
 fun App(
     config: Config,
     theme: Theme,
-    activeTheme: ThemeName,
-    themes: List<ThemeName>,
-    onTodoChange: (Path) -> Unit,
-    onThemeChange: (ThemeName) -> Unit
+    themes: ImmutableList<ThemeName>,
+    modifier: Modifier = Modifier,
+    onDocumentChange: (Path) -> Unit = {},
+    onThemeChange: (ThemeName) -> Unit = {},
 ) {
-    val filePath by derivedStateOf { config.lastFile }
+    val filePath = config.lastFile
     var document by remember { mutableStateOf(filePath?.let { path -> documentRepo.getByPath(path) }) }
     var textRange by remember { mutableStateOf(TextRange(0)) }
 
-    Row {
-        LeftSidebar(document, theme, activeTheme, themes,
-            onTodoChange = { path ->
+    Row(modifier = modifier) {
+        LeftSidebar(
+            document = document,
+            theme = theme,
+            themes = themes,
+            modifier = Modifier
+                .background(theme.sidebar.backgroundColor),
+            onDocumentChange = { path ->
                 textRange = TextRange(0)
                 document = documentRepo.getByPath(path)
-                onTodoChange(path)
-            }, onThemeChange
+                onDocumentChange(path)
+            },
+            onThemeChange = onThemeChange,
         )
 
         if (filePath != null) {
-            TodoEditor(document!!, textRange, theme) { updatedContent, updatedRange ->
+            TodoEditor(
+                document = document!!,
+                textRange = textRange,
+                theme = theme,
+                modifier = Modifier
+                    .background(theme.backgroundColor)
+                    .padding(5.dp)
+                    .fillMaxWidth()
+                    .fillMaxHeight(),
+            ) { updatedContent, updatedRange ->
                 textRange = updatedRange
                 document = updatedContent
                 documentRepo.save(document!!)
@@ -92,151 +108,46 @@ fun App(
 }
 
 @Composable
-fun LeftSidebar(
-    document: Document?,
-    theme: Theme,
-    activeTheme: ThemeName,
-    themes: List<ThemeName>,
-    onTodoChange: (Path) -> Unit,
-    onThemeChange: (ThemeName) -> Unit
-) {
-    var isExpanded by remember { mutableStateOf(false) }
-    var isFileChooserOpen by remember { mutableStateOf(false) }
-
-    Row(
-        modifier = Modifier
-            .background(theme.sidebar.backgroundColor.toColor())
-    ) {
-        Box(
-            modifier = Modifier
-                .width(if (isExpanded) 250.dp else 0.dp)
-                .fillMaxHeight()
-                .background(theme.sidebar.backgroundColor.toColor())
-        ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                horizontalAlignment = Alignment.Start,
-                modifier = Modifier.padding(15.dp)
-            ) {
-                Button(onClick = {
-                    isFileChooserOpen = true
-                }) {
-                    Text("Open todo")
-                }
-
-                if (document != null) {
-                    Text(
-                        document.name,
-                        fontWeight = FontWeight.Bold,
-                        color = theme.sidebar.textColor.toColor()
-                    )
-                }
-
-                ThemePicker(theme, activeTheme, themes, onThemeChange)
-            }
-        }
-        IconButton(
-            onClick = { isExpanded = !isExpanded },
-            modifier = Modifier
-                .background(theme.sidebar.backgroundColor.toColor())
-        ) {
-            Icon(
-                imageVector = Icons.Default.Menu,
-                contentDescription = null,
-                tint = theme.sidebar.textColor.toColor()
-            )
-        }
-
-        if (isFileChooserOpen) {
-            FileDialog(
-                onCloseRequest = { result ->
-                    isFileChooserOpen = false
-                    if (result != null) {
-                        onTodoChange(result)
-                    }
-                }
-            )
-        }
-    }
-}
-
-@Composable
 fun ThemePicker(
     theme: Theme,
-    activeTheme: ThemeName,
-    themes: List<ThemeName>,
-    onThemeChange: (ThemeName) -> Unit
+    themes: ImmutableList<ThemeName>,
+    modifier: Modifier = Modifier,
+    onThemeChange: (ThemeName) -> Unit = {},
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var isExpanded by remember { mutableStateOf(false) }
 
     Row(
+        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = activeTheme.displayName, color = theme.sidebar.textColor.toColor())
-        IconButton(onClick = { expanded = true }) {
+        Text(text = theme.name.displayName, color = theme.sidebar.textColor)
+        IconButton(onClick = { isExpanded = true }) {
             Icon(
                 Icons.Default.ArrowDropDown,
                 contentDescription = null,
-                tint = theme.sidebar.textColor.toColor()
+                tint = theme.sidebar.textColor,
             )
         }
         DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
+            expanded = isExpanded,
+            onDismissRequest = { isExpanded = false },
             modifier = Modifier
-                .background(theme.sidebar.backgroundColor.toColor())
+                .background(theme.sidebar.backgroundColor),
         ) {
             themes.forEach { themeName ->
-                DropdownMenuItem(onClick = {
-                    expanded = false
-                    onThemeChange(themeName)
-                }) {
-                    Text(
-                        text = themeName.displayName,
-                        color = theme.sidebar.textColor.toColor()
-                    )
-                }
+                DropdownMenuItem(
+                    onClick = {
+                        isExpanded = false
+                        onThemeChange(themeName)
+                    },
+                    content = {
+                        Text(
+                            text = themeName.displayName,
+                            color = theme.sidebar.textColor,
+                        )
+                    },
+                )
             }
         }
     }
 }
-
-@Composable
-private fun FileDialog(
-    parent: Frame? = null,
-    onCloseRequest: (result: Path?) -> Unit
-) = AwtWindow(
-    create = {
-        object : FileDialog(parent, "Choose a file", LOAD) {
-            override fun isMultipleMode(): Boolean = false
-
-            override fun setVisible(value: Boolean) {
-                super.setVisible(value)
-                if (value) {
-                    val path = Path(directory).resolve(file)
-                    onCloseRequest(path)
-                }
-            }
-        }.apply {
-            setFilenameFilter { _, name -> name.endsWith(".txt") }
-        }
-    },
-    dispose = FileDialog::dispose
-)
-
-fun String.toColor(): Color {
-    require(this.startsWith("#") && (this.length == 7 || this.length == 9)) {
-        "Invalid color string format. Expected format: #RRGGBB or #AARRGGBB"
-    }
-
-    val colorValue = if (length == 7) {
-        // If the color string is in #RRGGBB format, assume an alpha value of FF (fully opaque)
-        0xFF000000 or substring(1).toLong(16)
-    } else {
-        // If the color string is in #AARRGGBB format, parse the alpha value from the string
-        substring(1).toLong(16)
-    }
-
-    return Color(colorValue)
-}
-

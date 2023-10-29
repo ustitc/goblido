@@ -1,7 +1,7 @@
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
-class PartsExtensionTest : StringSpec({
+class PartsExtensionTest : StringSpec(body = {
 
     "parses dates" {
         val task = TodoTask("+project 2023-01-30")
@@ -12,4 +12,4 @@ class PartsExtensionTest : StringSpec({
             Other("2023-01-30"),
         )
     }
-})
+},)

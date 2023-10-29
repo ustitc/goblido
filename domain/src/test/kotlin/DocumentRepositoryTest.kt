@@ -1,10 +1,14 @@
 import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.createTempDirectory
+import kotlin.io.path.deleteRecursively
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 @OptIn(ExperimentalPathApi::class)
-class DocumentRepositoryTest : StringSpec({
+class DocumentRepositoryTest : StringSpec(body = {
 
     val contentRepo = DocumentRepository()
 
@@ -47,5 +51,4 @@ class DocumentRepositoryTest : StringSpec({
 
         path.readText() shouldBe "No tasks"
     }
-
-})
+},)

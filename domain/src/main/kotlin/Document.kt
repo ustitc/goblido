@@ -10,14 +10,18 @@ value class LineNumber(val value: Int) {
 
 data class Line(val text: String, val number: LineNumber)
 
-data class Document(
+class Document(
     val path: Path,
     val name: String,
-    val text: String
+    val text: String,
 ) {
 
     fun changeContent(content: String): Document {
-        return copy(text = content)
+        return Document(
+            path = path,
+            name = name,
+            text = content,
+        )
     }
 
     fun changeLine(line: Line): Document {
@@ -26,7 +30,11 @@ data class Document(
 
         lines[line.number.value] = line.text
         val updatedContent = lines.joinToString("\n")
-        return copy(text = updatedContent)
+        return Document(
+            path = path,
+            name = name,
+            text = updatedContent,
+        )
     }
 
     fun line(lineNumber: LineNumber): Line {

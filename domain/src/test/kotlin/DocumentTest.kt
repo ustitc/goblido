@@ -3,15 +3,15 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlin.io.path.Path
 
-class DocumentTest : StringSpec({
+class DocumentTest : StringSpec(body = {
 
     val content = Document(
         path = Path("local/todo.txt"),
         name = "todo.txt",
         text = """
-        Finish the PR +project
-        Have a coffee with Bryan @office
-    """.trimIndent()
+            Finish the PR +project
+            Have a coffee with Bryan @office
+        """.trimIndent(),
     )
 
     "changes entire content" {
@@ -26,8 +26,8 @@ class DocumentTest : StringSpec({
         val updatedContent = content.changeLine(line)
 
         updatedContent.text shouldBe """
-        Finish the PR +project
-        Have a beer with Bryan
+            Finish the PR +project
+            Have a beer with Bryan
         """.trimIndent()
     }
 
@@ -58,5 +58,4 @@ class DocumentTest : StringSpec({
             LineNumber(-1)
         }
     }
-
-})
+},)

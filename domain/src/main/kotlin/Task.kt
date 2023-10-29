@@ -2,13 +2,10 @@ import java.time.LocalDate
 
 private val doneTaskRegexp = Regex("^x ")
 private val dateRegexp = Regex("^[0-9]{4}-[0-9]{2}-[0-9]{2}")
-private val taskRegexp = Regex("(\\([A-Z]\\))|\\B\\+(\\S+)|\\B@(\\S+)|(https?://\\S+)|(\\S+:\\S+)")
-
+private val taskRegexp = Regex("""(\([A-Z]\))|\B\+(\S+)|\B@(\S+)|(https?://\S+)|(\S+:\S+)""")
 
 sealed interface Task : Printable {
-
     val value: String
-
 }
 
 @JvmInline
@@ -32,6 +29,7 @@ value class TodoTask(override val value: String) : Task {
         return parts(regexp)
     }
 
+    @Suppress("AvoidVarsExceptWithDelegate", "MagicNumber")
     private fun parts(regex: Regex): List<Part> {
         val parts = mutableListOf<Part>()
         val result = regex.findAll(value)
@@ -44,7 +42,10 @@ value class TodoTask(override val value: String) : Task {
                 parts.add(PlainText(plainText))
             }
             when {
-                match.groups[1] != null -> parts.add(Priority(match.value.drop(1).dropLast(1)))
+                match.groups[1] != null -> {
+                    val drop = match.value.drop(1)
+                    parts.add(Priority(drop.dropLast(1)))
+                }
                 match.groups[2] != null -> parts.add(Project(match.value.drop(1)))
                 match.groups[3] != null -> parts.add(Context(match.value.drop(1)))
                 match.groups[4] != null -> parts.add(WebLink(match.value))
@@ -65,7 +66,7 @@ value class TodoTask(override val value: String) : Task {
     }
 }
 
-data class DoneTask(override val value: String, private val date: LocalDate?) : Task {
+class DoneTask(override val value: String, private val date: LocalDate?) : Task {
 
     override fun print(): String {
         return if (date == null) {
@@ -78,7 +79,6 @@ data class DoneTask(override val value: String, private val date: LocalDate?) : 
     fun undo(): TodoTask {
         return TodoTask(value)
     }
-
 }
 
 object BlankTask : Task {
@@ -107,7 +107,8 @@ private fun parseTask(str: String): Task {
 
 private fun parseDoneTask(str: String): DoneTask {
     val withoutX = str.replace(doneTaskRegexp, "").trimStart()
-    val date = dateRegexp.find(withoutX)?.value?.let { LocalDate.parse(it) }
+    val dateStr = dateRegexp.find(withoutX)?.value
+    val date = dateStr?.let { LocalDate.parse(it) }
     val value = withoutX.replace(dateRegexp, "").trimStart()
     return DoneTask(value, date)
 }
