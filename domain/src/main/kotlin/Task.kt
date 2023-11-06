@@ -21,11 +21,11 @@ value class TodoTask(override val value: String) : Task {
         return parts(taskRegexp)
     }
 
-    fun parts(extensions: List<PartsExtension>): List<Part> {
-        if (extensions.isEmpty()) {
+    fun parts(plugins: List<HighlightPlugin>): List<Part> {
+        if (plugins.isEmpty()) {
             return parts()
         }
-        val regexp = Regex(taskRegexp.pattern + "|" + extensions.map { it.regex.pattern }.joinToString("|") { "($it)" })
+        val regexp = Regex(taskRegexp.pattern + "|" + plugins.map { it.regex.pattern }.joinToString("|") { "($it)" })
         return parts(regexp)
     }
 

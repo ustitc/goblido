@@ -14,3 +14,5 @@ rootProject.name = "goblido"
 
 include("app")
 include("domain")
+include("plugin-api")
+include("plugins")

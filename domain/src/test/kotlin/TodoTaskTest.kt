@@ -101,7 +101,7 @@ class TodoTaskTest : StringSpec(body = {
     "returns part of task with custom parsing" {
         val task = TodoTask("(A) create a web page ^_^ +goblido ^_^")
 
-        val extension = object : PartsExtension {
+        val extension = object : HighlightPlugin {
 
             override val regex: Regex
                 get() = Regex("\\^_\\^")
@@ -121,7 +121,7 @@ class TodoTaskTest : StringSpec(body = {
     "extensions doesn't affect built-in parsers" {
         val task = TodoTask("(A) create a web page +goblido")
 
-        val extension = object : PartsExtension {
+        val extension = object : HighlightPlugin {
 
             override val regex: Regex
                 get() = Regex("""\B\+(\S+)""")

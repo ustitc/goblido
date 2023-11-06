@@ -109,7 +109,7 @@ class TodoTxtTransformation(private val theme: Theme) : VisualTransformation {
 
     private fun toAnnotatedString(task: TodoTask): AnnotatedString {
         return buildAnnotatedString {
-            task.parts(listOf(DatePartExtension)).forEach { part ->
+            task.parts(listOf(DateHighlightPlugin)).forEach { part ->
                 when (part) {
                     is PlainText -> append(part.print())
 
