@@ -10,8 +10,6 @@ import kotlin.io.path.writeText
 @OptIn(ExperimentalPathApi::class)
 class DocumentRepositoryTest : StringSpec(body = {
 
-    val contentRepo = DocumentRepository()
-
     val testDir = createTempDirectory("todoTest")
     val testFilePath = testDir.resolve("todo.txt")
     val sampleTodo = """
@@ -28,7 +26,7 @@ class DocumentRepositoryTest : StringSpec(body = {
     }
 
     "reads content and return Todo instance" {
-        val content = contentRepo.getByPath(testFilePath)
+        val content = getDocument(testFilePath)
 
         content.text shouldBe sampleTodo
     }
@@ -37,7 +35,7 @@ class DocumentRepositoryTest : StringSpec(body = {
         val nonExistentPath = testDir.resolve("nonExistent.txt")
 
         shouldThrowAny {
-            contentRepo.getByPath(nonExistentPath)
+            getDocument(nonExistentPath)
         }
     }
 
@@ -45,9 +43,9 @@ class DocumentRepositoryTest : StringSpec(body = {
         val path = testDir.resolve("to_change.txt")
         path.writeText("Some tasks")
 
-        val content = contentRepo.getByPath(path)
+        val content = getDocument(path)
         val updatedContent = content.changeContent("No tasks")
-        contentRepo.save(updatedContent)
+        save(updatedContent)
 
         path.readText() shouldBe "No tasks"
     }

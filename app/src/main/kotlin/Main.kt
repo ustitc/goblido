@@ -25,8 +25,6 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.serialization.json.Json
 import java.nio.file.Path
 
-private val documentRepo = DocumentRepository()
-
 fun main(): Unit = application {
     val json = Json {
         prettyPrint = true
@@ -70,7 +68,7 @@ fun App(
     onThemeChange: (ThemeName) -> Unit = {},
 ) {
     val filePath = config.lastFile
-    var document by remember { mutableStateOf(filePath?.let { path -> documentRepo.getByPath(path) }) }
+    var document by remember { mutableStateOf(filePath?.let { path -> getDocument(path) }) }
     var textRange by remember { mutableStateOf(TextRange(0)) }
 
     Row(modifier = modifier) {
@@ -82,7 +80,7 @@ fun App(
                 .background(theme.sidebar.backgroundColor),
             onDocumentChange = { path ->
                 textRange = TextRange(0)
-                document = documentRepo.getByPath(path)
+                document = getDocument(path)
                 onDocumentChange(path)
             },
             onThemeChange = onThemeChange,
@@ -101,7 +99,7 @@ fun App(
             ) { updatedContent, updatedRange ->
                 textRange = updatedRange
                 document = updatedContent
-                documentRepo.save(document!!)
+                save(document!!)
             }
         }
     }
