@@ -11,6 +11,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.serialization.json.Json
 import java.nio.file.Path
 
@@ -71,6 +74,15 @@ fun App(
     var document by remember { mutableStateOf(filePath?.let { path -> getDocument(path) }) }
     var textRange by remember { mutableStateOf(TextRange(0)) }
 
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            delay(config.autoSavePeriod.inWholeMilliseconds)
+            if (document != null) {
+                save(document!!)
+            }
+        }
+    }
+
     Row(modifier = modifier) {
         LeftSidebar(
             document = document,
@@ -99,7 +111,6 @@ fun App(
             ) { updatedContent, updatedRange ->
                 textRange = updatedRange
                 document = updatedContent
-                save(document!!)
             }
         }
     }

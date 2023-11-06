@@ -6,6 +6,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.time.Duration
 
 private const val RGB_LENGTH = 7
 private const val RGBA_LENGTH = 9
@@ -60,4 +61,23 @@ fun toColor(str: String): Color {
     }
 
     return Color(colorValue)
+}
+
+object DurationSerializer : KSerializer<Duration> {
+    override val descriptor = buildClassSerialDescriptor("Duration") {
+        element<String>("durationString")
+    }
+
+    override fun serialize(encoder: Encoder, value: Duration) {
+        encoder.encodeString(value.toString())
+    }
+
+    override fun deserialize(decoder: Decoder): Duration {
+        val string = decoder.decodeString()
+        val duration = Duration.parse(string)
+        check(duration.isPositive()) {
+            "Auto save period must be positive"
+        }
+        return duration
+    }
 }

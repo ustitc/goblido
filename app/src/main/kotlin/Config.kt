@@ -13,18 +13,24 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.notExists
 import kotlin.io.path.writeText
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 private const val APP_CONFIG_NAME = "app.json"
 private const val CONFIG_DIR = ".goblido"
 private const val THEMES_DIR = "themes"
 private const val USER_HOME = "user.home"
+
 private val defaultTheme = lightTheme.name
+private val autoSavePeriod = 5.seconds
 
 @Serializable
 data class Config(
     @Serializable(with = PathSerializer::class)
     val lastFile: Path?,
     val theme: ThemeName,
+    @Serializable(with = DurationSerializer::class)
+    val autoSavePeriod: Duration,
 )
 
 @Serializable
@@ -97,7 +103,7 @@ fun loadConfig(json: Json): Config {
     return if (configFile.exists()) {
         json.decodeFromString<Config>(configFile.readText())
     } else {
-        Config(null, defaultTheme).also {
+        Config(lastFile = null, theme = defaultTheme, autoSavePeriod = autoSavePeriod).also {
             saveConfig(it, json)
         }
     }
