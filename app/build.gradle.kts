@@ -1,8 +1,8 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
-    kotlin("plugin.serialization") version "1.8.10"
-    id("org.jetbrains.compose")
+    kotlin("plugin.serialization") version "1.9.10"
+    id("org.jetbrains.compose") version "1.5.10"
 }
 
 repositories {
@@ -16,7 +16,7 @@ dependencies {
     // (in a separate module for demo project and in testMain).
     // With compose.desktop.common you will also lose @Preview functionality
     implementation(compose.desktop.currentOs)
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.6")
     implementation(project(":domain"))
     implementation(project(":plugins"))

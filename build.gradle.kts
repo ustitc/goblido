@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.net.URI
 
 plugins {
-    id("io.gitlab.arturbosch.detekt") version("1.23.1") apply true
+    id("io.gitlab.arturbosch.detekt") version("1.23.3") apply true
 }
 
 group = "dev.ustits"
@@ -14,7 +14,7 @@ buildscript {
     }
 
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.20")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.10")
     }
 }
 
