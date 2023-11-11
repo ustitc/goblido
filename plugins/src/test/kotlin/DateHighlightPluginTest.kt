@@ -4,9 +4,9 @@ import io.kotest.matchers.shouldBe
 class DateHighlightPluginTest : StringSpec(body = {
 
     "parses dates" {
-        val task = TodoTask("+project 2023-01-30")
+        val task = Task.from("+project 2023-01-30")
 
-        task.parts(listOf(DateHighlightPlugin)) shouldBe listOf(
+        parts(task, listOf(DateHighlightPlugin)) shouldBe listOf(
             Project("project"),
             PlainText(" "),
             Other("2023-01-30"),

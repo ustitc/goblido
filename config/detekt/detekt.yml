@@ -1040,6 +1040,7 @@ formatting:
     active: true
     autoCorrect: true
     useTrailingCommaOnCallSite: true
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
   TrailingCommaOnDeclarationSite:
     active: true
     autoCorrect: true

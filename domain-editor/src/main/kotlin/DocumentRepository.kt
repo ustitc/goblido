@@ -7,11 +7,11 @@ fun getDocument(path: Path): Document {
     require(path.exists())
 
     return runCatching { path.readText() }
-        .map { content ->
+        .map { text ->
             Document(
                 path = path,
                 name = path.name,
-                text = content,
+                content = Content.from(text),
             )
         }
         .getOrThrow()
@@ -20,5 +20,5 @@ fun getDocument(path: Path): Document {
 fun save(document: Document) {
     val file = document.path.toFile()
     require(file.exists())
-    file.writeText(document.text)
+    file.writeText(document.print())
 }

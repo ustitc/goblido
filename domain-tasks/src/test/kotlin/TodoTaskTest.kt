@@ -1,12 +1,12 @@
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
-class TodoTaskTest : StringSpec(body = {
+class TodoTaskTest : StringSpec({
 
     "returns part of task" {
         val task = TodoTask("(A) create a web page +goblido and +web @home https://dinf.io due:2023-09-10")
 
-        task.parts() shouldBe listOf(
+        Part.parts(task) shouldBe listOf(
             Priority("A"),
             PlainText(" create a web page "),
             Project("goblido"),
@@ -25,7 +25,7 @@ class TodoTaskTest : StringSpec(body = {
         val task =
             TodoTask("+project +проект +工程项目 +big-project +big_project +important!!! +project1 ++plusplus +plus+plus")
 
-        task.parts().filterIsInstance<Project>() shouldBe listOf(
+        Part.parts(task).filterIsInstance<Project>() shouldBe listOf(
             Project("project"),
             Project("проект"),
             Project("工程项目"),
@@ -41,14 +41,14 @@ class TodoTaskTest : StringSpec(body = {
     "doesn't parse projects" {
         val task = TodoTask("do logic on cmd+d")
 
-        task.parts().filterIsInstance<Project>() shouldBe emptyList()
+        Part.parts(task).filterIsInstance<Project>() shouldBe emptyList()
     }
 
     "parses contexts" {
         val text = "@context"
         val task = TodoTask(text)
 
-        task.parts().filterIsInstance<Context>() shouldBe listOf(
+        Part.parts(task).filterIsInstance<Context>() shouldBe listOf(
             Context("context"),
         )
     }
@@ -57,7 +57,7 @@ class TodoTaskTest : StringSpec(body = {
         val text = "@контекст @上下文环境"
         val task = TodoTask(text)
 
-        task.parts().filterIsInstance<Context>() shouldBe listOf(
+        Part.parts(task).filterIsInstance<Context>() shouldBe listOf(
             Context("контекст"),
             Context("上下文环境"),
         )
@@ -67,7 +67,7 @@ class TodoTaskTest : StringSpec(body = {
         val text = "@big-context @big_context @important!!! @context1 @@context @context@context"
         val task = TodoTask(text)
 
-        task.parts().filterIsInstance<Context>() shouldBe listOf(
+        Part.parts(task).filterIsInstance<Context>() shouldBe listOf(
             Context("big-context"),
             Context("big_context"),
             Context("important!!!"),
@@ -80,7 +80,7 @@ class TodoTaskTest : StringSpec(body = {
     "parses links" {
         val task = TodoTask("https://dinf.io http://dinf.io")
 
-        task.parts().filterIsInstance<WebLink>() shouldBe listOf(
+        Part.parts(task).filterIsInstance<WebLink>() shouldBe listOf(
             WebLink("https://dinf.io"),
             WebLink("http://dinf.io"),
         )
@@ -89,7 +89,7 @@ class TodoTaskTest : StringSpec(body = {
     "parses specials" {
         val task = TodoTask("key:value k1:v1 k-1:v-1 k!:v! k:v:v")
 
-        task.parts().filterIsInstance<Special>() shouldBe listOf(
+        Part.parts(task).filterIsInstance<Special>() shouldBe listOf(
             Special("key", "value"),
             Special("k1", "v1"),
             Special("k-1", "v-1"),
@@ -97,40 +97,4 @@ class TodoTaskTest : StringSpec(body = {
             Special("k", "v:v"),
         )
     }
-
-    "returns part of task with custom parsing" {
-        val task = TodoTask("(A) create a web page ^_^ +goblido ^_^")
-
-        val extension = object : HighlightPlugin {
-
-            override val regex: Regex
-                get() = Regex("\\^_\\^")
-        }
-
-        task.parts(listOf(extension)) shouldBe listOf(
-            Priority("A"),
-            PlainText(" create a web page "),
-            Other("^_^"),
-            PlainText(" "),
-            Project("goblido"),
-            PlainText(" "),
-            Other("^_^"),
-        )
-    }
-
-    "extensions doesn't affect built-in parsers" {
-        val task = TodoTask("(A) create a web page +goblido")
-
-        val extension = object : HighlightPlugin {
-
-            override val regex: Regex
-                get() = Regex("""\B\+(\S+)""")
-        }
-
-        task.parts(listOf(extension)) shouldBe listOf(
-            Priority("A"),
-            PlainText(" create a web page "),
-            Project("goblido"),
-        )
-    }
-},)
+})

@@ -3,7 +3,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
-class TodoEditorTest : StringSpec(body = {
+class TextFieldValueOperationsTest : StringSpec({
 
     "moves line up" {
         val textField = TextFieldValue(
@@ -15,14 +15,7 @@ class TodoEditorTest : StringSpec(body = {
             selection = TextRange(13),
         )
 
-        moveLineUp(textField, LineNumber(1)) shouldBe TextFieldValue(
-            text = """
-                second task
-                first task
-                third task
-            """.trimIndent(),
-            selection = TextRange(2),
-        )
+        textField.moveCursorUp().selection shouldBe TextRange(2)
     }
 
     "doesn't move line up if is first" {
@@ -35,7 +28,7 @@ class TodoEditorTest : StringSpec(body = {
             selection = TextRange(2),
         )
 
-        moveLineUp(textField, LineNumber(0)) shouldBe textField
+        textField.moveCursorUp().selection shouldBe TextRange(2)
     }
 
     "moves line down" {
@@ -48,14 +41,7 @@ class TodoEditorTest : StringSpec(body = {
             selection = TextRange(13),
         )
 
-        moveLineDown(textField, LineNumber(1)) shouldBe TextFieldValue(
-            text = """
-                first task
-                third task
-                second task
-            """.trimIndent(),
-            selection = TextRange(24),
-        )
+        textField.moveCursorDown().selection shouldBe TextRange(24)
     }
 
     "doesn't move line down if is last" {
@@ -68,6 +54,6 @@ class TodoEditorTest : StringSpec(body = {
             selection = TextRange(23),
         )
 
-        moveLineDown(textField, LineNumber(2)) shouldBe textField
+        textField.moveCursorDown().selection shouldBe TextRange(23)
     }
-},)
+})

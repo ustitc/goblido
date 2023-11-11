@@ -13,6 +13,8 @@ pluginManagement {
 rootProject.name = "goblido"
 
 include("app")
-include("domain")
+include("commands")
+include("domain-editor")
+include("domain-tasks")
 include("plugin-api")
 include("plugins")

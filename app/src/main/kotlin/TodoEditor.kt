@@ -11,6 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.text.AnnotatedString
@@ -26,36 +28,39 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 
+@Suppress("MagicNumber")
+private val defaultSelectionColor = Color(0xFF4286F4)
+
 @Composable
 fun TodoEditor(
-    document: Document,
+    content: Content,
     textRange: TextRange,
     theme: Theme,
     modifier: Modifier = Modifier,
-    onValueChange: (Document, TextRange) -> Unit = { _, _ -> },
+    cursorBrush: Brush = SolidColor(Color.Black),
+    textSelectionColors: TextSelectionColors = TextSelectionColors(
+        handleColor = defaultSelectionColor,
+        backgroundColor = defaultSelectionColor.copy(alpha = 0.4f),
+    ),
+    onValueChange: (Content, TextRange) -> Unit = { _, _ -> },
 ) {
-    val textState = TextFieldValue(document.text, textRange)
+    val textState = TextFieldValue(content.print(), textRange)
 
     Box(modifier = modifier) {
         val stateVertical = rememberScrollState()
 
-        val selectionBgColor = theme.select.backgroundColor
-        val customTextSelectionColors = TextSelectionColors(
-            handleColor = theme.select.handleColor,
-            backgroundColor = selectionBgColor.copy(alpha = 0.5f),
-        )
         CompositionLocalProvider(
-            LocalTextSelectionColors provides customTextSelectionColors,
+            LocalTextSelectionColors provides textSelectionColors,
         ) {
             BasicTextField(
                 value = textState,
-                onValueChange = {
-                    onValueChange(document.changeContent(it.text), it.selection)
+                onValueChange = { value ->
+                    onValueChange(content.changeText(value.text), value.selection)
                 },
                 modifier = Modifier
                     .verticalScroll(stateVertical)
-                    .onPreviewKeyEvent(KeyBindings(textState, document, onValueChange)),
-                cursorBrush = SolidColor(theme.cursorColor),
+                    .onPreviewKeyEvent(KeyBindings(textState, content, onValueChange)),
+                cursorBrush = cursorBrush,
                 textStyle = TextStyle(
                     color = theme.text.color,
                     fontWeight = FontWeight(theme.text.fontWeight),
@@ -81,7 +86,7 @@ class TodoTxtTransformation(private val theme: Theme) : VisualTransformation {
 
     private fun buildColors(text: String): AnnotatedString {
         return buildAnnotatedString {
-            val tasks = tasks(text)
+            val tasks = Task.tasks(text)
             tasks.forEachIndexed { index, task ->
                 append(toAnnotatedString(task))
                 if (index < tasks.lastIndex) {
@@ -109,7 +114,7 @@ class TodoTxtTransformation(private val theme: Theme) : VisualTransformation {
 
     private fun toAnnotatedString(task: TodoTask): AnnotatedString {
         return buildAnnotatedString {
-            task.parts(listOf(DateHighlightPlugin)).forEach { part ->
+            parts(task, listOf(DateHighlightPlugin)).forEach { part ->
                 when (part) {
                     is PlainText -> append(part.print())
 
